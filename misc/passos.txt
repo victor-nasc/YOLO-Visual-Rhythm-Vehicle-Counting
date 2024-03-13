@@ -1,0 +1,187 @@
+
+
+
+
+==================================
+PASSO A PASSO EXECUTADO E DETALHES
+==================================
+
+
+
+
+1) Montagem do Dataset de Veiculos
+
+  Frames seleciodados de forma aleatoria (ainda é possivel saber a ordem deles no video)
+    VIDEO 1 
+      Tamanho: 30 segundos
+      60 imagens (frames)
+      https://www.youtube.com/watch?v=Gr0HpDM8Ki8&list=PLcQZGj9lFR7y5WikozDSrdk6UCtAnM9mB&index=6
+
+    VIDEO 2
+      Tamanho 5 minutos e 6 segundos
+      300 imagens (frames)
+      https://www.youtube.com/watch?v=MNn9qKG2UFI&list=PLcQZGj9lFR7y5WikozDSrdk6UCtAnM9mB&index=2
+
+    VIDEO 3
+      Tamanho 34 minutos e 56 segundos
+      300 imagens (frames)
+      https://www.youtube.com/watch?v=QuUxHIVUoaY
+
+    VIDEO 4
+      Tamanho 11 minutos e 27 segundos
+      300 imagens (frames)
+      https://www.youtube.com/watch?v=2kYpqSMqrzg
+
+
+  Rotulados usando 'app.roboflow.com' totalizando 960 imagens
+
+  Classes: 'Bus', 'Car', 'Motorbike', 'Pickup', 'Truck', 'Van'
+
+  Treino / Validação / Teste
+    70        20        10 
+
+  Imagens reduzidas para 1280x720 
+
+  Sem preprocessamento nem augmentation
+
+
+  Informações mais detalhadas no Heath Check (talvez essa tela so seja disponível para mim)
+  https://universe.roboflow.com/victor-nascimento-ribeiro-xn4bn/traffic-camera-m6koi
+
+
+
+
+2) Geração das imagens VR
+
+  Baseado em: 
+  https://www.teses.usp.br/teses/disponiveis/45/45134/tde-24042014-150825/publico/MasterThesis.pdf
+ 
+  A linha foi estraída na altura 600 de todos os vídeos e empilhadas formando a imagem 
+  Uma altura boa para em todos os vídeos. (não pega o faról do vídeo 2)
+  
+  Criados a cada 900 frames do video (30 segundos) resultando numa imagem 1280x900
+
+  Não há nenhum processamento nas imagens VR
+
+
+
+
+
+3) Localização das Manchas
+
+  Encontradas usando YOLOv8s (small)
+    IoU = 0.2  (baixo já que muito dificilmente as manchas diferentes estariam sobrepostas. 
+                Baixo evita localizações sobrepostas)
+    conf = 0.2 (baixo pois quero perder o mínimo de manchas possível, caso detecte um falso 
+                positivo mais a frente será descartado por não ser uma mancha de veiculos)
+              
+              
+  Treinado em 33 VRs gerados em intervalos aleatórios dos 4 vídeos. (também 1280x900)
+    Augmentation:  Flip: Horizontal, Vertical
+                   Crop: 0% Minimum Zoom, 25% Maximum Zoom 
+    Totalizando 79 imagens
+    https://universe.roboflow.com/victor-nascimento-ribeiro-xn4bn/mancha
+  
+  
+  TREINAMENTO 
+    model=yolov8s.pt
+    task=detect 
+    mode=train 
+    epochs=75 
+    batch=8 
+
+    * outros hiperparametros deixei o padrão do YOLO
+    mAP0.5 == 0.99136
+    mAP0.5:0.95 == 0.60865 
+
+    Mais informações sobre os resultados em 'results.csv' no drive
+
+
+
+
+
+4) Extrassão do frame correspondente ao veículo no video bruto
+
+  Cada linha no eixo X (1280x1) da imagem VR corresponde a um frame diferente no vídeo bruto
+   
+  A partir da altura da mancha na imagem VR conseguimos o frame no vídeo bruto em que o veículo 
+  passa na linha selecionada
+
+  Para cada video selecionei o frame de diferentes formas  
+  No vídeo 1 pegamos o primeiro frame da mancha, o de cima  -  (veiculos vem de cima para baixo)
+           2 pegamos o frame do meio da mancha, o do meio   -  (veiculos vem em ambas as direções)
+           3 pegamos o ultimo frame da mancha, o de baixo   -  (veiculos vem de baixo para cima)
+  É diferente para cada vídeo pois os carros se movem em sentidos diferentes em cada um deles         
+
+  Assim consigo escolher o frame em que o veículo fica por inteiro na imagem 
+  Pegar sempre como no vídeo 2 há momentos em que o veículo sai cortado
+
+
+
+
+
+5) Reconhecimento dos veiculos
+
+  Encontradas usando YOLOv8s (small)
+    IoU=0.5  
+    Conf=0.3 (parece baixo mas funciona melhor assim)
+
+  Treinado no Dataset 1)
+    model=yolov8s.pt 
+    task=detect 
+    mode=train 
+    epochs=100
+    batch=64
+ 
+    * outros hiperparametros deixei o padrão do YOLO
+    mAP0.5 == 0.84274
+    mAP0.5:0.95 == 0.69166 
+
+    Mais informações sobre os resultados em 'results.csv' no drive
+
+
+  Após detectar todos os veículos no frame selecionado
+    Usamos as coordenadas do eixo X da mancha correspondente para obter uma posição aproximada das 
+    coordenadas do veículo no frame selecionado.
+    
+    Dos veículos detectados, selecionamos aqueles que possuem coordenadas próximas as da mancha (delta de +-100 pixeis)
+    Calculamos sua distancia até a posição da linha selecionada na geração do VR
+    Escolhemos a classe do veículo mais suficientemente próximo da linha para atualizar a contagem
+    Se não houver nenhum descartamos esse frame (falha na lozalização das manchas ou no próprio reconhecimento dos veículos)
+  
+  
+
+
+
+ 
+6) Programa
+  
+  Python: OpenCV, Numpy e ultralytics (biblioteca do YOLOv8)
+  video.py (ainda ta muito poluido com muita variavel e print desnecessário mas que usei para debugar)
+  
+  
+  Algoritmo simplificado
+  - Montar a imagem VR
+  - Localizar as manchas com o YOLO
+  - Para cada mancha na imagem VR, selecionar o frame correspondente no vídeo bruto
+  - Aplicar o YOLO e, dentre os veículos detectados, verificar aqueles que possuem coordenadas no eixo X próximos a mancha.
+     Dentre esses, selecionar o mais próximo o suficiente a linha e atualizar a contagem. 
+     Se nenhum estiver próximo o suficiente consideramos que naquela mancha não há veículos
+
+
+  6.1) Detalhes de implementação
+    Altura da linha na geração do VR: 600px
+    Tamanho dos VR: 900 frames (1280x900), o ultimo VR será os frames restantes, nao terá 900 de altura provavelmente
+    Classes: 0 = Bus ; 1 = Car ; 2 = Motorbike ; 3 = Pickup ; 4 = Truck ; 5= Van
+    Formas de selecionar os frames diferentes de acordo com o sentido dos veículos ( seção 4 )
+    Delta ao redor das coordenadas no eixo X da mancha: 100px
+    
+    Manchas de veículos em 2 VRs diferentes (mancha na fronteira)
+      Se uma mancha está próxima o suficiente ao fim de um VR salva as coordenadas do eixo X dela (x0 e x1). 
+      Montando uma lista de manchas que estão na fronteira do VR.
+      Na hora de encontrar as manchas no próximo VR, sempre que encontrar uma mancha no próxima o suficiente do início desse VR, verifico 
+      se o centro dessa mancha está entre algum x0 e x1 salvo anteriormente. Se estiver, então é o mesmo veículo e ignoramos essa mancha.
+
+
+
+

@@ -1,0 +1,247 @@
+
+
+
+
+
+Resultados contagem
+ :( == RUIM
+ :) == BOM
+
+
+
+==================================================================================
+
+
+
+VIDEO 1
+
+GROUND TRUTH (resumido)
+Numero de veiculos:
+['Bus', 'Car', 'Motorbike', 'Pickup', 'Truck', 'Van']
+[  0  ,   5  ,      0     ,    0    ,    0   ,   1  ]
+Total: 6
+
+
+RESULTADO
+- 0 Manchas erradas
+ 
+  
+- 0 veiculos classificados errados
+  acc = 100%
+ 
+ 
+- Contou: 6 
+  ['Bus', 'Car', 'Motorbike', 'Pickup', 'Truck', 'Van']
+  [  0  ,   5  ,      0     ,    0    ,    0   ,   1  ]
+  acc = 100% (na quantidade)
+    
+   
+==================================================================================
+
+  
+VIDEO 2
+
+GROUND TRUTH (resumido)
+Numero de veiculos:
+['Bus', 'Car', 'Motorbike', 'Pickup', 'Truck', 'Van']
+[  3  ,  264 ,      4     ,    1   ,    18   ,  55  ]
+Total: 345
+
+
+RESULTADO
+- 0 Manchas erradas  
+  
+  
+- 5 veiculos reconhecidos porém classificados errados
+    Truth   -   Classificação
+     Van    -        Bus      (Bus36007.jpg)
+     Van    -        Car      (Car90019.jpg)
+     Van    -        Car      (Car540023.jpg)
+     Car    -        Van      (Van360025.jpg)
+    Truck   -        Van      (Van450030.jpg)
+        acc = 98.55% 
+       
+       
+- Contou: 345 
+  ['Bus', 'Car', 'Motorbike', 'Pickup', 'Truck', 'Van']
+  [  4  ,  265 ,      4     ,    1   ,    17   ,  54  ]
+  [ +1  ,  +1  ,      0     ,    0   ,    -1   ,  -1  ]
+  acc = 100% (na quantidade)
+	
+       
+==================================================================================
+
+
+VIDEO 3
+
+
+GROUND TRUTH (resumido)
+Numero de veiculos:
+  ['Bus', 'Car', 'Motorbike', 'Pickup', 'Truck', 'Van']	
+  [ 14  ,  492 ,     135    ,    42   ,   69   ,   14 ]
+Total:  766
+
+
+
+RESULTADO
+- 31 Manchas erradas  
+  VR 19800: marcou a mesma mancha 2 vezes  ->  Nao reconheceu uma delas como veiculo, entao nao foi para a contagem  :)   (AAA19824.jpg)
+  VR 19800: marcou a mesma mancha 2 vezes  ->  Nao reconheceu uma delas como veiculo, entao nao foi para a contagem  :)   (AAA20611.jpg)
+  VR 35100: marcou a mesma mancha 2 vezes  ->  Nao reconheceu uma delas como veiculo, entao nao foi para a contagem  :)   (AAA35832.jpg)
+  VR 34200: marcou a mesma mancha 2 vezes  ->  Nao reconheceu uma delas como veiculo, entao nao foi para a contagem  :)   (AAA34289.jpg)
+  
+  VR 14400: marcou uma mancha que nao era um veiculo -> Nao reconheceu como veiculo, entao nao foi para a contagem  :) 
+  VR 19800: marcou uma mancha que nao era um veiculo -> Nao reconheceu como veiculo, entao nao foi para a contagem  :)   (AAA20700.jpg)
+  VR 52000: marcou uma mancha que nao era um veiculo -> Nao reconheceu como veiculo, entao nao foi para a contagem  :)   (AAA52381.jpg)
+  VR 55800: marcou uma mancha que nao era um veiculo -> Nao reconheceu como veiculo, entao nao foi para a contagem  :)   (AAA56334.jpg)
+  
+  VR 7200:  marcou a mesma mancha 2 vezes            -> Reconheceu como veiculo, foi para a contagem  :(   (Truck720018.jpg)
+  VR 9900:  marcou a mesma mancha 2 vezes            -> Reconheceu como veiculo, foi para a contagem  :(   (Truck99000.jpg)
+  VR 37800: marcou a mesma mancha 2 vezes            -> Reconheceu como veiculo, foi para a contagem  :(   (Truck378016.jpg)
+  VR 37800: marcou a mesma mancha 2 vezes            -> Reconheceu como veiculo, foi para a contagem  :(   (Truck3780012.jpg)
+  VR 38700: marcou a mesma mancha 2 vezes            -> Reconheceu como veiculo, foi para a contagem  :(   (Truck3870010.jpg)
+  VR 34200: marcou a mesma mancha 2 vezes            -> Reconheceu como veiculo, foi para a contagem  :(   (Motorbike3420019.jpg)
+  VR 61200: marcou a mesma mancha 2 vezes            -> Reconheceu como veiculo, foi para a contagem  :(   (Truck612008.jpg)
+  
+  VR 15300: perdeu uma mancha       (motorbike)        -> Não foi para a contagem  :(         
+  VR 16200: perdeu uma mancha       (car)              -> Não foi para a contagem  :(         
+  VR 25200: perdeu uma mancha       (motorbike)        -> Não foi para a contagem  :(       
+  VR 25200: perdeu uma mancha       (motorbike)        -> Não foi para a contagem  :(      
+  VR 31500: perdeu uma mancha       (motorbike)        -> Não foi para a contagem  :(         
+  VR 32400: perdeu uma mancha       (motorbike)        -> Não foi para a contagem  :(         
+  VR 32400: perdeu uma mancha *     (car)              -> Não foi para a contagem  :( --╲  era o mesmo veículo 
+  VR 33200: perdeu uma mancha *       *                -> Não foi para a contagem  :( --╱  em 2 VR diferentes
+  VR 42300: perdeu uma mancha       (car)              -> Não foi para a contagem  :(         
+  VR 47700: perdeu uma mancha       (car)              -> Não foi para a contagem  :(         
+  VR 49500: perdeu uma mancha       (motorbike)        -> Não foi para a contagem  :(         
+  VR 51300: perdeu uma mancha *     (car)              -> Não foi para a contagem  :( --╲  era o mesmo veículo
+  VR 52000: perdeu uma mancha *       *                -> Não foi para a contagem  :( --╱  em 2 VR diferentes
+  VR 57600: perdeu uma mancha       (motorbike)        -> Não foi para a contagem  :( 
+  VR 59400: perdeu uma mancha *     (car)              -> Não foi para a contagem  :( --╲  era o mesmo veículo
+  VR 60300: perdeu uma mancha *       *                -> Não foi para a contagem  :( --╱  em 2 VR diferentes
+    
+
+
+- 35 veiculos reconhecidos porém classificados errados
+        Truth    -   Classificação
+        Truck    -        Bus      (Bus198004.jpg)
+         Van     -        Bus      (Bus396001.jpg)
+        Truck    -        Bus      (Bus990016.jpg)
+         Van     -        Car      (Car144002.jpg)
+         Bus     -        Car      (Car324000.jpg)
+        Truck    -        Car      (Car522002.jpg)
+        Truck    -        Car      (Car270000.jpg)
+        Pickup   -        Car      (Car117005.jpg)
+        Pickup   -        Car      (Car126000.jpg)
+        Pickup   -        Car      (Car207007.jpg)
+        Pickup   -        Car      (Car00.jpg)
+        Pickup   -        Car      (Car72000.jpg)
+        Pickup   -        Car      (Car360000.jpg)
+        Pickup   -        Car      (Car468004.jpg)
+        Pickup   -        Car      (Car495006.jpg)
+        Pickup   -        Car      (Car513009.jpg)
+        Pickup   -        Car      (Car531006.jpg)
+        Pickup   -        Car      (Car540000.jpg)
+        Pickup   -        Car      (Car576001.jpg)
+        Pickup   -        Car      (Car603002.jpg)
+        Pickup   -        Car      (Car3420017.jpg)
+        Pickup   -        Car      (Car4590011.jpg)
+	 Van     -       Truck     (Truck3780016.jpg)
+	 Van     -       Truck     (Truck495001.jpg)
+	 Van     -       Truck     (Truck378000.jpg)
+	 Van     -       Truck     (Truck297002.jpg)
+	 Bus     -       Truck     (Truck576000.jpg)
+        Pickup   -       Truck     (Truck08.jpg)
+        Pickup   -       Truck     (Truck612000.jpg)
+	 Bus     -       Truck     (Truck567000.jpg)
+	 Car     -       Truck     (Truck9008.jpg)
+        Truck    -        Van      (Van04.jpg)
+        Truck    -        Van      (Van495008.jpg)
+         Car     -        Van      (Van594002.jpg)
+         Car     -     Motorbike   (Motorbike315009.jpg)
+             acc = 95.36% 
+        
+
+- 5 Falhas no reconhecimento da mancha
+  10246.jpg  -  Não reconheceu um carro
+  19816.jpg  -  Não reconheceu um caminhão
+  35866.jpg  -  Não reconheceu um caminhão
+  53747.jpg  -  Não reconheceu um carro
+  54559.jpg  -  Não reconheceu um caminhão
+  
+  19824.jpg  -  Realmente não havia veiculo
+  20611.jpg  -  Realmente não havia veiculo
+  20700.jpg  -  Realmente não havia veiculo
+  34289.jpg  -  Realmente não havia veiculo
+  35832.jpg  -  Realmente não havia veiculo
+  52381.jpg  -  Realmente não havia veiculo
+  56334.jpg  -  Realmente não havia veiculo
+         acc = 99.33%
+  
+  
+- Contou:  755
+  ['Bus', 'Car', 'Motorbike', 'Pickup', 'Truck', 'Van']	
+  [ 14  ,  501 ,     129    ,    25   ,   73   ,   13 ]
+  [  0  ,  +9  ,     -6     ,   -17   ,   +4   ,   -1 ]
+  acc = 98.56% (na quantidade)
+
+
+
+==================================================================================
+
+
+
+VIDEO 4
+
+GROUND TRUTH (resumido)
+Numero de veiculos:
+['Bus', 'Car', 'Motorbike', 'Pickup', 'Truck', 'Van']
+[  5  ,  331 ,     12     ,    0    ,    9   ,  10  ]
+Total:  367
+
+
+RESULTADO
+- 4 Manchas erradas  
+  VR 15300: marcou a mesma mancha 2 vezes  ->  Nao reconheceu uma delas como veiculo, então nao contou (15375.jpg)  :)
+  VR 18900: marcou a mesma mancha 2 vezes  ->  Nao reconheceu uma delas como veiculo, então nao contou (18972.jpg)  :)
+  VR 3600:  marcou uma sombra como mancha  ->  Reconheceu um veiculo proximo e contou errado (Bus36007.jpg)  :(
+  VR 5400:  perdeu uma mancha de veiculo   ->  Não foi para a contagem :( 
+  
+  
+- 9 veiculos reconhecidos porém classificados errados
+    Truth    -   Classificação
+     Van     -       Car       ( Car54006.jpg )
+     Van     -       Car       ( Car153002.jpg )
+     Van     -       Car       ( Car162006.jpg )
+     Van     -       Car       ( Car198007.jpg )
+     Van     -       Car       ( Car810024.jpg )
+     Van     -       Car       ( Car1980015.jpg )
+     Van     -      Truck      ( Truck1530010.jpg )
+     Car     -       Van       ( Van72002.jpg )
+    Truck    -       Bus       ( Bus54001.jpg )
+         acc = 97.54% 
+        
+
+- 8 Falhas no reconhecimento da mancha
+  Bus36007.jpg    -  Reconheceu veiculo aonde não deveria ter
+  AAA3863.jpg     -  Não reconheceu a bicicleta
+  AAA4305.jpg     -  Não conseguiu pegar o frame em que a moto passou (essa tava com certeza fora do limite de velocidade)
+  AAA7401.jpg     -  Não reconheceu a bicicleta
+  AAA19552.jpg    -  Não reconheceu a Van
+              acc = 97.83%
+  
+  
+- Contou: 363
+  ['Bus', 'Car', 'Motorbike', 'Pickup', 'Truck', 'Van']
+  [  6  ,  330 ,      6     ,    0    ,    9   ,   9  ]
+  [ +1  ,  -1  ,     -3     ,    0    ,    0   ,  -1  ]
+  acc = 98.91% (na quantidade)
+  
+  
+  
+  
+  
+  
+  
+  
+  

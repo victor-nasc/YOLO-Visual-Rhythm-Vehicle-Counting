@@ -1,4 +1,3 @@
-
 '''
 Combining YOLO with Visual Rhythm for Vehicle Counting  
 
@@ -16,122 +15,117 @@ Usage:
 '''
 
 
+
 import cv2
 import numpy as np
 from ultralytics import YOLO
+import easyocr
 
 import argparse
 import os
 
 
-def counting(VR, line, cap, ini, double, model_mark, model_vehicle, saveVehicle):
+def counting(line, frame, l, r, time, model_vehicle, saveVehicle):
     labels = ['Bus', 'Car', 'Motorbike', 'Pickup', 'Truck', 'Van', '???'] 
+    delta = 70
     count = np.array([0, 0, 0, 0, 0, 0, 0])
-    duo = []
-    infos = [['label', 'frame', 'conf', 'x0', 'y0', 'x1', 'y1']]
-    delta = 120
+    infos = []
+    height , width, _ = np.shape(frame)
 
+
+    # detect vehicles
+    vehicles = model_vehicle(frame, iou=0.5, conf=0.3, verbose=False, save=True, agnostic_nms=True)
+    vehicles = vehicles[0].numpy()
     
-    # detect marks
-    marks = model_mark(VR, iou=0.05, conf=0.25, verbose=False) 
-    marks = marks[0].numpy()
-    boxes = marks.boxes.xyxy  
-    print(f'Detected {len(boxes)} marks')
     
-
-    # for each mark
-    for box in boxes:
-        x0, y0, x1, y1 = np.floor(box).astype(int)
-        
-        # save coordinates for the next VR
-        if y1 >= len(VR) - 1:
-            duo.append([x0, x1])
-        # check marks in the previous VR 
-        elif y0 <= 1:
-            mid = (x1 + x0) // 2
-            if any(x1_ant <= mid <= x2_ant for x1_ant, x2_ant in double):
-                continue
-
-        
-        # gets the corresponding frame 
-        frame = ini + (y0 + y1) // 2
-        cap.set(cv2.CAP_PROP_POS_FRAMES, frame)
-        
-        ret, img = cap.read()   
-        if ret == False:
-            print('Frame not found  :(') # should never happen
-            continue        
-        
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        width  = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        
+    # extend the mark's x-coordinates
+    # l = max(l - delta, 0) + aa
+    # r = min(r + delta, width) + aa
     
-        # detect vehicles
-        vehicles = model_vehicle(img, iou=0.5, conf=0.3, verbose=False)
-        vehicles = vehicles[0].numpy()
-        
-        
-        # extend the mark's x-coordinates
-        a = max(x0 - delta, 0)
-        b = min(x1 + delta, width)
-        
-        
-        # find the vehicle associated with the mark
-        dist_min = height
-        crop = img
-        classe = conf = -1
-        for cls, xyxy, cnf in zip(vehicles.boxes.cls, vehicles.boxes.xyxy, vehicles.boxes.conf):
-            x0, y0, x1, y1 = np.floor(xyxy).astype(int)
-            mid_x = (x0 + x1) // 2
-
-            if a < mid_x < b and y0 < line < y1:
-                mid_y = (y0 + y1) // 2
-                dist = abs(mid_y - line)
-                if dist < dist_min:
-                    dist_min = dist
-                    classe = int(cls)
-                    conf = cnf
-                    if saveVehicle:
-                        crop = img[y0:y1 , x0:x1]
-        
-        
-        # update infos
-        infos.append([labels[classe], frame, conf, x0, y0, x1, y1])
-
-
-        # update count
-        count[classe] += 1
-
-        if classe == -1:
-            print(f"Couldn't find the vehicle in frame {frame}!!!")
-            print('VERIFY IT MANUALLY')
-
-        if saveVehicle:
-            name = f'vehicle-crops/{str(labels[classe])}{frame}.jpg'
-            print(f'Saving as {name}')
-            cv2.imwrite(name, crop)
-            
-            
-    print('Count in this VR: ')
-    print_count(count)
-    print()
     
-    return duo, count, infos
-        
-        
-    
+    # find the vehicle associated with the mark
+    dist_min = 600
+    crop = frame.copy()
+    classe = conf = -1
+    x0 = y0 = x1 = y1 = 0
+    for cls, xyxy, cnf in zip(vehicles.boxes.cls.astype(int), vehicles.boxes.xyxy, vehicles.boxes.conf):
+        x0, y0, x1, y1 = np.floor(xyxy).astype(int)
+        x0 = max(x0 - delta, 0) + aa
+        x1 = min(x1 + delta, width) + aa
 
-def main(video_path, line, sec, saveVR, saveVehicle):
-    ini = 0     # current VR initial frame
-    double = [] # marks on the border of the previous VR
-    infos = []  # details of each vehicle
-    VR = []     # VR image
+        mid_x = (r + l) // 2
+        dist = abs(y1-line)
+        print(y0,y1, abs(y1-line), x0, x1, mid_x, x0 < mid_x < x1)
+        if y1 < line and x0 < mid_x < x1 and dist < dist_min:
+            dist_min = dist
+            classe = int(cls)
+            conf = cnf
+            # if saveVehicle:
+            crop = frame[y0:y1, x0:x1]
+                
+    
+    count[classe] += 1
+    cv2.imshow('croppp', crop)
+    infos.append([labels[classe], frame, conf, x0, y0, x1, y1])
+    print(f'{labels[classe]} detected in frame {time}\n')
+
+    if conf < 0:
+        print(f"Couldn't find the vehicle in frame {time}!!!")
+        print('VERIFY IT MANUALLY')
+
+
+    if saveVehicle:
+        name = f'vehicle-crops/{str(labels[classe])}{time}.jpg'
+        print(f'Saving as {name}')
+        cv2.imwrite(name, crop)
+        
+        
+    print(f'{labels[classe]} detected with confidence {conf:.2f} \n')
+
+    return count, infos
+        
+        
+        
+def count_clusters(vector):
+    vector = vector.flatten()
+    
+    # indices que mudam de 0 <-> 1
+    changes = np.where(np.diff(vector) != 0)[0] + 1
+    
+    # ultimo elemento do vetor há 0 <-> 1
+    if vector[-1] == 1:
+        changes = np.append(changes, len(vector))
+    if vector[0] == 1:
+        changes = np.append(0, changes)
+
+    indices = changes.reshape(-1, 2)
+    indices[:, 1] -= 1 
+
+    return indices
+
+
+
+def main(video_path, line, sec, saveVR, saveVehicle, midlane):
+    infos = [['label', 'frame', 'conf', 'x0', 'y0', 'x1', 'y1']]  # details of each vehicle
     count = np.array([0, 0, 0, 0, 0, 0, 0]) # count of each class
+    time = 0
     
+    VR_ori = []
+    VR_or = []
+    VR = []
     
+
     # load models
-    model_mark = YOLO('./YOLO/marks/weights/best.pt')
     model_vehicle = YOLO('./YOLO/vehicle/weights/best.pt')
+    bg = cv2.createBackgroundSubtractorMOG2(detectShadows=False, history=1)
+    reader = easyocr.Reader(['en'])
+
+
+     # creates folders to save images
+    if saveVehicle and not os.path.exists('vehicle-crops/'):
+        os.makedirs('vehicle-crops/')
+    if saveVR and not os.path.exists('VR-images/'):
+        os.makedirs('VR-images/')
 
 
     # opens the video
@@ -139,62 +133,77 @@ def main(video_path, line, sec, saveVR, saveVehicle):
     assert cap.isOpened() == True, 'Can not open the video'
 
 
-    # creates folders to save images
-    if saveVehicle and not os.path.exists('vehicle-crops/'):
-        os.makedirs('vehicle-crops/')
-    if saveVR and not os.path.exists('VR-images/'):
-        os.makedirs('VR-images/')
-        
-        
+    # move to frame 1000
+    cap.set(cv2.CAP_PROP_POS_FRAMES,5700)
+    
+
+    linha_or = np.zeros(bb-aa+1)
+
     # begins video 
     while True: 
-        ret, frame = cap.read() 
-        if ret == False:
+        ret, frameRGB = cap.read() 
+        if not ret:
+            print('Error reading video')
+            break
+
+        # line background subtraction
+        frame_bg = frameRGB[line]
+        frame_bg = bg.apply(frame_bg)
+        frame_bg = cv2.blur(frame_bg, (5,5))
+        _, frame_bg = cv2.threshold(frame_bg, 127, 255, cv2.THRESH_BINARY)
+        diff = np.dot(frame_bg,[0.114, 0.587, 0.299])
+
+                        
+        linha_or = np.logical_or(linha_or, diff)
+        counts = count_clusters(linha_or)
+        
+        if np.any(counts):
+            for l, r in counts:
+                linha_xor = np.logical_xor(diff[l:r+1], linha_or[l:r+1])
+                xor_sum = np.sum(linha_xor)
+                
+                if r-l+1 < 100: 
+                    linha_or[l:r+1] = False
+                elif xor_sum == r-l+1:
+                    cnt, inf = counting(line, frameRGB, l, r, time, model_vehicle, saveVehicle)
+                    count += cnt
+                    infos += inf
+                    
+                    linha_or[l:r+1] = False
+                    cv2.waitKey(0)
+                
+
+        # vizualizacao apenas
+        # VR_ori.append(frameRGB[line, aa:bb+1])
+        # VR.append(diff.astype(int)*255)
+        # VR_or.append(linha_or*255)
+
+
+        cv2.line(frameRGB, (aa, line), (bb, line), (0, 255, 0), 2)
+        cv2.imshow('frame', cv2.resize(frameRGB, (888, 500)))
+        
+        time += 1
+        
+        key = cv2.waitKey(1)
+        if key == ord('q'):
             break
         
-        # stacks line in VR image
-        VR.append(frame[line])
-        
-        
-        # if VR image has been fully built
-        if len(VR) == sec:        
-            print(f'VR image {ini//sec} created')    
 
-            if saveVR:
-                name = 'VR-images/VR' + str(ini//sec) + '.jpg'
-                print(f'Saving as {name}')
-                cv2.imwrite(name, np.array(VR)) 
-            
-            double, cnt, inf = counting(np.array(VR), line, cap, ini, double, model_mark, model_vehicle, saveVehicle)                
-            count += cnt
-            infos += inf
-
-            VR = []
-            ini += sec
-            cap.set(cv2.CAP_PROP_POS_FRAMES, ini)
-        
-        
-    # count the remaining frames
-    if len(VR) > 0:
-        print(f'VR image {ini//sec + 1} created')
-        _, cnt, inf = counting(np.array(VR), line, cap, ini, double, model_mark, model_vehicle, saveVehicle)  
-        count += cnt 
-        infos += inf
-        if saveVR:
-            name = 'VR-images/VR' + str(ini//sec + 1) + '.jpg'
-            print(f'Saving as {name}')
-            cv2.imwrite(name, np.array(VR)) 
-
+    cv2.imwrite('VR_original.jpg', np.array(VR_ori))
+    cv2.imwrite('VR_or.jpg', np.array(VR_or))
+    cv2.imwrite('VR.jpg', np.array(VR))
+    
 
     # final results
     print('\n -------------------------- \n')
     print_count(count)
     print(sum(count), 'vehicles counted in total')
     
+
     # write infos
-    with open('infos.txt', 'w') as file:
-        for item in infos:
-            file.write(str(item) + '\n')
+    # with open('infos.txt', 'w') as file:
+    #     for item in infos:
+    #         file.write(str(item) + '\n')
 
 
     # closes the video
@@ -219,15 +228,38 @@ if __name__ == "__main__":
     # parse arguments
     parser = argparse.ArgumentParser(description='Count the number of vehicles in a video')
     
-    parser.add_argument('--line', type=int, default=600, help='Line position')
+    parser.add_argument('--line', type=int, default=450, help='Line position')
     parser.add_argument('--interval', type=int, default=900, help='Interval between VR images (frames)')
-    parser.add_argument('--save-VR', type=bool, default='False', help='Enable saving VR images')
-    parser.add_argument('--save-vehicle', type=bool, default='False', help='Enable saving vehicle images')
+    parser.add_argument('--save-VR', type=bool, default=False, help='Enable saving VR images')
+    parser.add_argument('--save-vehicle', type=bool, default=False, help='Enable saving vehicle images')
     args = parser.parse_args()
 
 
-    video_path = input('Enter the video path: ')
+    # video_path = input('Enter the video path: ')
+    video_path = 'Set05.mp4'
     
-    
+    if video_path == 'videoplayback1.mp4':
+        args.line = 450
+        midlane = 0
+        aa = 370    
+        bb = 1200
+    elif video_path == 'videoplayback2.mp4':
+        args.line = 330
+        midlane = 450
+        aa = 160 
+        bb = 850
+    elif video_path =='Set05.mp4':
+        args.line = 800
+        midlane = 0
+        aa = 0
+        bb = 1919
+    elif video_path == 'videoplayback.mp4':
+        args.line = 500
+        midlane = 545
+        aa = 0
+        bb = 1279
+
+        
+    # 400 1200
     print('Counting vehicles in the video...\n')
-    main(video_path, args.line, args.interval, args.save_VR, args.save_vehicle)
+    main(video_path, args.line, args.interval, args.save_VR, args.save_vehicle, midlane)

@@ -1,0 +1,52 @@
+CLASSES:
+Car
+Van
+Motorbike
+Bus
+Truck
+Pickup
+
+
+
+LINK: https://universe.roboflow.com/victor-nascimento-ribeiro-xn4bn/traffic-camera-m6koi
+===========================================================================================
+
+
+
+CLIMA BOM - todos rotulados
+ VIDEO 1 
+  Tamanho: 30 segundos
+  1 frame a cada 0.5 segundos => 60 imgs
+  1920x1080
+  https://www.youtube.com/watch?v=Gr0HpDM8Ki8&list=PLcQZGj9lFR7y5WikozDSrdk6UCtAnM9mB&index=6
+
+
+ VIDEO 2
+  Tamanho 5 minutos e 6 segundos
+  1 frame a cada 1.02 segundos => 300 imgs
+  3840 x 2160
+  https://www.youtube.com/watch?v=MNn9qKG2UFI&list=PLcQZGj9lFR7y5WikozDSrdk6UCtAnM9mB&index=2
+
+
+ VIDEO 3
+  Tamanho 34 minutos e 56 segundos
+  1 frame a cada 6.98 segundos => 300 imgs
+  3840x2160
+  https://www.youtube.com/watch?v=QuUxHIVUoaY
+
+
+ VIDEO 4
+  Tamanho 11 xminutos e 27 segundos
+  1 frame a cada 2.29 segundos => 300 imgs
+  3840x2160
+  https://www.youtube.com/watch?v=2kYpqSMqrzg
+
+
+
+
+
+CLIMA RUIM 
+  ????? COMO SEPARAR???
+
+
+
